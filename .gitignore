@@ -1,1 +1,29 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Runtime data
+pids
+*.pid
+*.seed
+*.pid.lock
+
+# Compiled binary addons (https://nodejs.org/api/addons.html)
+build/Release
+
+# Dependency directories
 node_modules/
+
+# Optional npm cache directory
+.npm
+# eslint
+.eslintignore
+.eslintrc
+
+.DS_Store
+assets/public/images
+assets/private.jwt.key
+assets/public.jwt.key

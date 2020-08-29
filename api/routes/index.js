@@ -1,6 +1,5 @@
 let router = require('express').Router();
 
-require('./product')(router);
-require('./store')(router);
+require('./user')(router);
 
 module.exports = router;
