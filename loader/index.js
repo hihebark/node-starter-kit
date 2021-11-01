@@ -1,5 +1,6 @@
 module.exports.load = async () => {
-  const app = await require('./express.js').start();
-  const db = await require('./database.js').start();
-  return {app: app, db: db};
+  const app = await require('./express').start();
+  const db = await require('./database').start();
+  const cron = await require('./cron').start();
+  return {app, db, cron};
 }

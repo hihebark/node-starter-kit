@@ -1,29 +1,38 @@
-const { hide, jwt, crypt } = require('../../commons');
+const { jwt } = require('../../commons')
+, bcrypt = require('bcrypt')
+, { UserSchema } = require('../../db/schemas')
+, { Validator } = require('bevor')
+, { UserFormatAdapter } = require('../format_adapters');
 
 const create = async (req, res, next) => {
   try {
-    const { UserSchema } = require('../../db/schemas/user');
-    let { query } = req.body
-      , user = {};
+    let { query } = req.body;
+
     if (!query)
       return res.status(400).send({success: false, error: 'Missing information'});
-    user.email = query.email;
-    user.username = query.username;
-    user.password = query.password.toString();
-    user.isConfirmed = false;
-    if (req.file != undefined && req.file.buffer != undefined) {
-      user.photo=`${process.env.PUBLIC_IMAGES}${user.username}-${req.file.filename}`;
-    }
-    user = new UserSchema(user);
-    let err = user.validateSync();
-    if (err)
-      next({trigger: 'MongoError', ...err});
-    await user.save().then(async user => {
-      delete user['password'];
-      res.status(200).send({ success: true });
-    }).catch(err => {
-      next({trigger: 'MongoError', ...err});
+
+    const validator = new Validator(query, [
+      { email: ['required', 'email'] },
+      { username: ['required', 'string'] },
+      { password: ['required', 'string'] },
+    ]);
+
+    if (!validator.validate())
+      return res.status(400).send({
+        success: false,
+        errors_validation: validator.errors()
+      });
+
+    let user = new UserSchema({
+      email: query.email,
+      username: query.username,
+      password: await bcrypt.hash(query.password.toString(), 10),
     });
+
+    await user.save().then(async user => {
+      res.set('Authorization', 'Bearer '+jwt.sign({ user_id: user._id }));
+      res.status(200).send({ success: true, user: UserFormatAdapter(user) });
+    }).catch(err => next(err));
   } catch(err) {
     next(err);
   }
@@ -32,40 +41,43 @@ module.exports.create = create;
 
 const signin = async (req, res, next) => {
   try {
-    const { UserSchema } = require('../../db/schemas/user');
     let { query } = req.body;
-    if (!query || !query.auth || !query.password)
+    if (!query)
       return res.status(400).send({success: false, error: 'Missing information'});
-    let criteria = {$or: [{username: query.auth}, {email: query.auth}]};
-    UserSchema.findOne(criteria).then(async user => {
-      if (!user)
-        return res.status(404).send({success: false, error: 'User not found'});
-      const { compareHashedPassword } = require('../../commons');
-      if (!compareHashedPassword(query.password, user.password))
-        return res.status(400).send({success: false, error: 'Bad authentication'});
-      res.set('Authorization', 'Bearer '+jwt.sign({ _id: crypt.encrypt(user._id) }));
-      delete user['password'];
-      res.status(200).send({ success: true, user });
-    }).catch(err => { next(err); });
+
+    const validator = new Validator(query, [
+      { auth: ['required', 'string'] },
+      { password: ['required', 'string'] },
+    ]);
+
+    if (!validator.validate())
+      return res.status(400).send({
+        success: false,
+        errors_validation: validator.errors()
+      });
+
+    let criteria = { $or: [ { username: query.auth }, { email: query.auth } ] };
+
+    let user = await UserSchema.findOne(criteria).catch(err => next(err));
+    if (!user)
+      return res.status(404).send({success: false, error: 'User not found'});
+
+    if (!bcrypt.compareSync(query.password, user.password))
+      return res.status(400).send({success: false, error: 'Bad authentication'});
+
+    res.set('Authorization', 'Bearer '+jwt.sign({ user_id: user._id }));
+    res.status(200).send({ success: true, user: UserFormatAdapter(user) });
   } catch(err) {
     next(err);
   }
 }
 module.exports.signin = signin;
 
-const findOne = async (req, res, next) => {
+const getUser = async (req, res, next) => {
   try {
-    const { UserSchema } = require('../../db/schemas/user');
-    let { username } = req.params;
-    if (!username)
-      return res.status(400).send({success: false, error: 'Missing information'})
-    await UserSchema.findOne({ username }, '-password -__v').then(async user => {
-      if (!user)
-        return res.status(404).send({success: false, error: 'User not found'});
-      return res.status(200).send({success: true, user});
-    });
+    res.status(200).send({ success: true, user: UserFormatAdapter(req.user) });
   } catch(err) {
     next(err);
   }
 }
-module.exports.findOne = findOne;
+module.exports.getUser = getUser;
