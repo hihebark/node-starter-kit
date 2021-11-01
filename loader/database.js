@@ -1,10 +1,8 @@
 module.exports.start = async () => {
-  let DBURL = (process.env.DEV_ENV == 'production') ? 
-    process.env.DATABASEURLPROD : (process.env.DEV_ENV == 'local') ? 
-    process.env.DATABASEURLDEV : 'mongodb://localhost:27017/test';
-  let mongoose = require('mongoose');
-  let connect = await mongoose.connect(
-    DBURL,
+  const mongoose = require('mongoose')
+  , log = require('../commons/logger')
+  , connect = await mongoose.connect(
+    process.env.DATABASEURL,
     {
       useNewUrlParser: true,
       useUnifiedTopology: true,
@@ -13,6 +11,8 @@ module.exports.start = async () => {
     }
   );
   mongoose.Promise = global.Promise;
-  __LOGGER.info('Connecting to database... DONE!');
+  // creating collection if they are not created!
+  require('../db/schemas');
+  log.info('Connecting to database... DONE!');
   return connect.connection;
 }

@@ -1,13 +1,15 @@
 const jsonwebtoken = require('jsonwebtoken')
+, { readFileSync } = require('fs')
 , options = {
-    issuer: 'gratify',
+    issuer: 'node_starter_kit',
     subject: 'request',
     audience: 'user',
-    expiresIn: "7d",
-    algorithm: "RS256"
+    expiresIn: '7d',
+    algorithm: 'RS256'
 }
-, private = require('fs').readFileSync(__dirname+'/../assets/private.jwt.key', 'utf8')
-, public = require('fs').readFileSync(__dirname+'/../assets/public.jwt.key', 'utf8');
+, private = readFileSync(__dirname+'/../assets/private.jwt.key', 'utf8')
+, public = readFileSync(__dirname+'/../assets/public.jwt.key', 'utf8');
+// to create those files refere to -> https://gist.github.com/hihebark/cd2f5df90cf184896bfbfafef1ad934b
 
 const jwt = {
   sign: (payload) => {
@@ -16,7 +18,8 @@ const jwt = {
   verify: (token) => {
     try{
       return jsonwebtoken.verify(token, public, options);
-    }catch (err){
+    }catch (err) {
+      console.log(err)
       return false;
     }
   },

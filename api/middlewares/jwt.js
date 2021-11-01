@@ -1,34 +1,40 @@
 const jwt = async (req, res, next) => {
   let authorized = [
-    {path: '/users/create$', method: 'POST'},
-    {path: '/users/login$', method: 'POST'},
-    {path: '/users/forget_password$', method: 'POST'},
-    {path: '/users/reset_password/*', method: 'POST'},
+    {path: '/healthz$', method: 'POST'},
+    {path: '/users/signup$', method: 'POST'},
+    {path: '/users/signin$', method: 'POST'},
   ];
-  if (authorized.find(v => new RegExp(v.path).test(req.path))) {
+  if (authorized.findIndex(v =>
+      new RegExp(v.path).test(req.path) && v.method == req.method) != -1) {
     next();
   } else {
     try {
+      const { http_errors } = require('../../commons/errors')
       if (req.header('Authorization')) {
-        const { jwt, crypt } = require('../../commons');
-        const { UserSchema } = require('../../db/schemas/user');
-        const token = req.header('Authorization').replace('Bearer ', '');
-        const data = jwt.verify(token);
-        if (data && data != null) {
-          await UserSchema.findOne({ _id: crypt.decrypt(data._id) }).then(user => {
-            req.user = user;
-            next();
-          }).catch(err => {
-            res.status(401).send({success: false, error: 'Unauthorized request'});
+        const { jwt } = require('../../commons')
+        , { UserSchema } = require('../../db/schemas')
+        , token = req.header('Authorization').replace('Bearer ', '')
+        , data = jwt.verify(token);
+        if (data) {
+          const user = await UserSchema.findOne({ _id: data.user_id });
+          if(!user)
+            res.status(401).send({
+              success: false, error: http_errors.unauthorized_request
+            });
+          req.user = user;
+          next();
+        } else {
+          return res.status(200).send({
+            success: false, error: http_errors.expired_token
           });
         }
       } else {
-        res.status(401).send({success: false, error: 'Unauthorized request'});
+        return res.status(200).send({
+          success: false, error: http_errors.bad_request
+        });
       }
     } catch (err) {
-      res.status(500).send({
-        success: false, error: 'An error has occurred. Please try again'
-      });
+      next(err);
     }
   }
 }

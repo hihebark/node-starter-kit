@@ -1,17 +1,21 @@
 {
-  "name": "nodeproof",
-  "version": "2.0.0",
+  "name": "starter-kit",
+  "version": "3.0.0",
   "description": "",
   "main": "index.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "lint": "eslint . && echo \"¯\\_(ツ)_/¯\""
   },
-  "keywords": [],
-  "author": "",
+  "keywords": [
+    "api"
+  ],
+  "author": "hihebark",
   "license": "ISC",
   "dependencies": {
     "axios": "^0.21.2",
     "bcrypt": "^5.0.0",
+    "bevor": "^1.0.4",
     "dotenv": "^8.2.0",
     "express": "^4.17.1",
     "express-mongo-sanitize": "^2.0.0",
@@ -19,6 +23,10 @@
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^5.9.14",
     "mongoose-unique-validator": "^2.0.3",
-    "multer": "^1.4.2"
+    "multer": "^1.4.2",
+    "node-cron": "^3.0.0"
+  },
+  "devDependencies": {
+    "eslint": "^7.11.0"
   }
 }

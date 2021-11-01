@@ -1,13 +1,7 @@
-const cors = async (req, res, next) => { next(); }
-const logger = require('./logger');
-const errorHundler = require('./error-handler');
-const jwt = require('./jwt')
-const sanity = require('./sanity')
-
 module.exports = {
-  jwt,
-  cors,
-  sanity,
-  logger,
-  errorHundler
+  jwt: require('./jwt'),
+  cors: (req, res, next) => { next(); },
+  sanity: require('./sanity'),
+  agarwood: require('./agarwood'),
+  errorHundler: require('./error-handler'),
 }

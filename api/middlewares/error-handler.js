@@ -1,19 +1,27 @@
 const errorHundler = async (err, req, res, next) => {
+  const { http_errors } = require('../../commons/errors');
   if (res.headersSent) next(err);
-  __LOGGER.erro('-+'.repeat(32));
-  __LOGGER.erro(err.stack);
-  __LOGGER.erro('-+'.repeat(32));
+  const log = require('../../commons/logger');
+  log.error('-+'.repeat(32));
+  log.error((err.stack || JSON.stringify(err)));
+  log.error('-+'.repeat(32));
   if (err['response'])
-    __LOGGER.erro(err.response.status, err.response.data, err.response.headers);
+    log.error(err.response.status, JSON.stringify(err.response.data));
   if (err['request'])
-    __LOGGER.erro(err.request);
-  if (err['trigger'] == 'MongoError') {
-    if (err.name == 'ValidationError') {
-      let errors = [];
-      for (let i of Object.keys(err.errors)) { errors.push({[i]: err.errors[i].message}) }
-      return res.status(400).send({success: false, error: 'Failed validating', error_codes: errors});
+    log.error(err.request);
+  if (err.name == 'ValidationError') {
+    let validation = [];
+    for (let e of Object.keys(err.errors)) {
+      validation.push({[e]: err.errors[e].message});
     }
+    return res.status(200).send({success: false, error: validation});
   }
-  res.status(500).send({success: false, error: 'An error has occurred. Please try again'});
+  return res.status(200).send({
+    success: false,
+    error: (
+      process.env.DEV_ENV == 'production' ?
+      http_errors.default : { message: err.message, code: 'unknown' }
+    )
+  });
 }
 module.exports = errorHundler;

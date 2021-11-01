@@ -24,6 +24,7 @@ node_modules/
 .eslintrc
 
 .DS_Store
+.env
 assets/public/images
 assets/private.jwt.key
 assets/public.jwt.key
