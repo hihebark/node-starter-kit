@@ -13,7 +13,7 @@
   "author": "hihebark",
   "license": "ISC",
   "dependencies": {
-    "axios": "^0.21.2",
+    "axios": "^1.6.0",
     "bcrypt": "^5.0.0",
     "bevor": "^1.0.4",
     "dotenv": "^8.2.0",
